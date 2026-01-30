@@ -13,13 +13,33 @@ topology:
       user: root
       mgmt-ipv4: 172.20.100.11
       exec:
-        - sh -lc 'apk add --no-cache openssh shadow'
-        - sh -lc 'adduser -D -s /bin/sh ahmed'
+        - sh -lc 'apk add --no-cache openssh shadow iproute2'
+        - sh -lc 'adduser -D -s /bin/sh ahmed || true'
         - sh -lc 'echo "ahmed:1111" | chpasswd'
         - sh -lc 'ssh-keygen -A'
         - sh -lc 'mkdir -p /run/sshd'
         - sh -lc 'sed -i "s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config'
-        - sh -lc '/usr/sbin/sshd'
+
+        # Data-plane IPs
+        - sh -lc 'ip link set eth1 up; ip addr add 10.0.12.1/30 dev eth1'
+        - sh -lc 'ip link set eth2 up; ip addr add 192.168.1.1/24 dev eth2'
+
+        # Enable FRR daemons (OSPF only, no config)
+        - sh -lc 'mkdir -p /etc/frr'
+        - sh -lc 'sed -i "s/^zebra=.*/zebra=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^staticd=.*/staticd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^watchfrr=.*/watchfrr=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^ospfd=.*/ospfd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'echo "service integrated-vtysh-config" > /etc/frr/vtysh.conf'
+        - sh -lc 'chown frr:frr /etc/frr/vtysh.conf 2>/dev/null || true'
+        - sh -lc 'rm -f /var/run/frr/*.pid 2>/dev/null || true'
+        - sh -lc '/usr/lib/frr/frrinit.sh restart || /usr/lib/frr/frrinit.sh start || true'
+
+        # SSH drops into vtysh
+        - sh -lc 'getent group frrvty >/dev/null 2>&1 && addgroup ahmed frrvty 2>/dev/null || true'
+        - sh -lc 'getent group frr >/dev/null 2>&1 && addgroup ahmed frr 2>/dev/null || true'
+        - sh -lc 'command -v vtysh >/dev/null 2>&1 && usermod -s "$(command -v vtysh)" ahmed || true'
+        - sh -lc '/usr/sbin/sshd || true'
 
     R2:
       kind: linux
@@ -27,13 +47,31 @@ topology:
       user: root
       mgmt-ipv4: 172.20.100.12
       exec:
-        - sh -lc 'apk add --no-cache openssh shadow'
-        - sh -lc 'adduser -D -s /bin/sh ahmed'
+        - sh -lc 'apk add --no-cache openssh shadow iproute2'
+        - sh -lc 'adduser -D -s /bin/sh ahmed || true'
         - sh -lc 'echo "ahmed:1111" | chpasswd'
         - sh -lc 'ssh-keygen -A'
         - sh -lc 'mkdir -p /run/sshd'
         - sh -lc 'sed -i "s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config'
-        - sh -lc '/usr/sbin/sshd'
+
+        - sh -lc 'ip link set eth1 up; ip addr add 10.0.12.2/30 dev eth1'
+        - sh -lc 'ip link set eth2 up; ip addr add 10.0.23.1/30 dev eth2'
+        - sh -lc 'ip link set eth3 up; ip addr add 10.0.24.1/30 dev eth3'
+
+        - sh -lc 'mkdir -p /etc/frr'
+        - sh -lc 'sed -i "s/^zebra=.*/zebra=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^staticd=.*/staticd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^watchfrr=.*/watchfrr=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^ospfd=.*/ospfd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'echo "service integrated-vtysh-config" > /etc/frr/vtysh.conf'
+        - sh -lc 'chown frr:frr /etc/frr/vtysh.conf 2>/dev/null || true'
+        - sh -lc 'rm -f /var/run/frr/*.pid 2>/dev/null || true'
+        - sh -lc '/usr/lib/frr/frrinit.sh restart || /usr/lib/frr/frrinit.sh start || true'
+
+        - sh -lc 'getent group frrvty >/dev/null 2>&1 && addgroup ahmed frrvty 2>/dev/null || true'
+        - sh -lc 'getent group frr >/dev/null 2>&1 && addgroup ahmed frr 2>/dev/null || true'
+        - sh -lc 'command -v vtysh >/dev/null 2>&1 && usermod -s "$(command -v vtysh)" ahmed || true'
+        - sh -lc '/usr/sbin/sshd || true'
 
     R3:
       kind: linux
@@ -41,13 +79,29 @@ topology:
       user: root
       mgmt-ipv4: 172.20.100.13
       exec:
-        - sh -lc 'apk add --no-cache openssh shadow'
-        - sh -lc 'adduser -D -s /bin/sh ahmed'
+        - sh -lc 'apk add --no-cache openssh shadow iproute2'
+        - sh -lc 'adduser -D -s /bin/sh ahmed || true'
         - sh -lc 'echo "ahmed:1111" | chpasswd'
         - sh -lc 'ssh-keygen -A'
         - sh -lc 'mkdir -p /run/sshd'
         - sh -lc 'sed -i "s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config'
-        - sh -lc '/usr/sbin/sshd'
+
+        - sh -lc 'ip link set eth1 up; ip addr add 10.0.23.2/30 dev eth1'
+
+        - sh -lc 'mkdir -p /etc/frr'
+        - sh -lc 'sed -i "s/^zebra=.*/zebra=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^staticd=.*/staticd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^watchfrr=.*/watchfrr=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^ospfd=.*/ospfd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'echo "service integrated-vtysh-config" > /etc/frr/vtysh.conf'
+        - sh -lc 'chown frr:frr /etc/frr/vtysh.conf 2>/dev/null || true'
+        - sh -lc 'rm -f /var/run/frr/*.pid 2>/dev/null || true'
+        - sh -lc '/usr/lib/frr/frrinit.sh restart || /usr/lib/frr/frrinit.sh start || true'
+
+        - sh -lc 'getent group frrvty >/dev/null 2>&1 && addgroup ahmed frrvty 2>/dev/null || true'
+        - sh -lc 'getent group frr >/dev/null 2>&1 && addgroup ahmed frr 2>/dev/null || true'
+        - sh -lc 'command -v vtysh >/dev/null 2>&1 && usermod -s "$(command -v vtysh)" ahmed || true'
+        - sh -lc '/usr/sbin/sshd || true'
 
     R4:
       kind: linux
@@ -55,13 +109,30 @@ topology:
       user: root
       mgmt-ipv4: 172.20.100.14
       exec:
-        - sh -lc 'apk add --no-cache openssh shadow'
-        - sh -lc 'adduser -D -s /bin/sh ahmed'
+        - sh -lc 'apk add --no-cache openssh shadow iproute2'
+        - sh -lc 'adduser -D -s /bin/sh ahmed || true'
         - sh -lc 'echo "ahmed:1111" | chpasswd'
         - sh -lc 'ssh-keygen -A'
         - sh -lc 'mkdir -p /run/sshd'
         - sh -lc 'sed -i "s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config'
-        - sh -lc '/usr/sbin/sshd'
+
+        - sh -lc 'ip link set eth1 up; ip addr add 10.0.24.2/30 dev eth1'
+        - sh -lc 'ip link set eth2 up; ip addr add 192.168.2.1/24 dev eth2'
+
+        - sh -lc 'mkdir -p /etc/frr'
+        - sh -lc 'sed -i "s/^zebra=.*/zebra=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^staticd=.*/staticd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^watchfrr=.*/watchfrr=yes/" /etc/frr/daemons || true'
+        - sh -lc 'sed -i "s/^ospfd=.*/ospfd=yes/" /etc/frr/daemons || true'
+        - sh -lc 'echo "service integrated-vtysh-config" > /etc/frr/vtysh.conf'
+        - sh -lc 'chown frr:frr /etc/frr/vtysh.conf 2>/dev/null || true'
+        - sh -lc 'rm -f /var/run/frr/*.pid 2>/dev/null || true'
+        - sh -lc '/usr/lib/frr/frrinit.sh restart || /usr/lib/frr/frrinit.sh start || true'
+
+        - sh -lc 'getent group frrvty >/dev/null 2>&1 && addgroup ahmed frrvty 2>/dev/null || true'
+        - sh -lc 'getent group frr >/dev/null 2>&1 && addgroup ahmed frr 2>/dev/null || true'
+        - sh -lc 'command -v vtysh >/dev/null 2>&1 && usermod -s "$(command -v vtysh)" ahmed || true'
+        - sh -lc '/usr/sbin/sshd || true'
 
     h1:
       kind: linux
@@ -69,7 +140,15 @@ topology:
       user: root
       mgmt-ipv4: 172.20.100.21
       exec:
-        - sh -lc 'apk add --no-cache iproute2 iputils'
+        - sh -lc 'apk add --no-cache iproute2 iputils openssh shadow'
+        - sh -lc 'adduser -D -s /bin/sh ahmed || true'
+        - sh -lc 'echo "ahmed:1111" | chpasswd'
+        - sh -lc 'ssh-keygen -A'
+        - sh -lc 'mkdir -p /run/sshd'
+        - sh -lc 'sed -i "s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config'
+        - sh -lc '/usr/sbin/sshd || true'
+        - sh -lc 'ip link set eth1 up; ip addr add 192.168.1.10/24 dev eth1'
+        - sh -lc 'ip route add default via 192.168.1.1'
 
     h2:
       kind: linux
@@ -77,7 +156,15 @@ topology:
       user: root
       mgmt-ipv4: 172.20.100.22
       exec:
-        - sh -lc 'apk add --no-cache iproute2 iputils'
+        - sh -lc 'apk add --no-cache iproute2 iputils openssh shadow'
+        - sh -lc 'adduser -D -s /bin/sh ahmed || true'
+        - sh -lc 'echo "ahmed:1111" | chpasswd'
+        - sh -lc 'ssh-keygen -A'
+        - sh -lc 'mkdir -p /run/sshd'
+        - sh -lc 'sed -i "s/^#\\?PasswordAuthentication.*/PasswordAuthentication yes/" /etc/ssh/sshd_config'
+        - sh -lc '/usr/sbin/sshd || true'
+        - sh -lc 'ip link set eth1 up; ip addr add 192.168.2.10/24 dev eth1'
+        - sh -lc 'ip route add default via 192.168.2.1'
 
   links:
     - endpoints: ["R1:eth1", "R2:eth1"]
