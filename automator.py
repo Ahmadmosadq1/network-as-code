@@ -1,32 +1,32 @@
 from netmiko import ConnectHandler
 from getpass import getpass
 
-# Ask once, reuse everywhere
-#getpass allows you to type without echoing to the terminal
-password = getpass("Device Password:")
+username = input("Username: ")
+password = getpass("Password: ")
 
-device ={
-        "device_type": "cisco_ios",
-        "host": "192.168.241.2",
-        "username": "ahmed",
-        "password": password,
-    }
-
-commands = [
-    "show ip interface brief",
-    "show version"
+routers = [
+    {
+        "device_type": "linux",
+        "host": "172.20.100.11",
+    },
+    {
+        "device_type": "linux",
+        "host": "172.20.100.12",
+    },
 ]
 
-connection = ConnectHandler(**device)
+for r in routers:
+    r["username"] = username
+    r["password"] = password
 
-for cmd in commands:
-    output = connection.send_command(cmd)
-    print(f"--- {cmd} ---")
-    #to print only first 4 lines of output
-    lines = output.splitlines()
-    for line in lines[:4]:
-        if line.strip():  # Avoid printing empty lines
-            print(line)
+    print(f"\n===== {r['host']} =====")
 
-connection.disconnect()
+    conn = ConnectHandler(**r)
 
+    output = conn.send_command("ip -br addr")
+    # Cisco-style alternative:
+    # output = conn.send_command("vtysh -c 'show ip interface brief'"
+
+    print(output)
+
+    conn.disconnect()
