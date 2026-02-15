@@ -1,0 +1,9 @@
+netmiko
+paramiko
+pyyaml
+jinja2
+napalm
+rich
+textfsm
+ntc-templates
+requests
