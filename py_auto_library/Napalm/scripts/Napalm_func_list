@@ -1,0 +1,19 @@
+# NAPALM Getters Reference
+
+| Function | Description |
+|--------|-------------|
+| get_arp_table | Get the ARP table from a device |
+| get_bgp_neighbors | Get BGP neighbors |
+| get_bgp_neighbors_detail | Detailed BGP neighbor info |
+| get_config | Get device configuration |
+| get_facts | Version, serial, vendor, model, uptime |
+| get_interfaces | List interfaces |
+| get_interfaces_ip | Interface IP addresses |
+| get_lldp_neighbors | LLDP neighbors |
+| get_lldp_neighbors_detail | LLDP neighbor details |
+| get_mac_address_table | MAC table |
+| get_ntp_servers | NTP info |
+| get_route_to | Show route |
+| get_snmp_information | SNMP info |
+| is_alive | Connection check |
+| ping | Ping from device |
